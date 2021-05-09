@@ -1,0 +1,27 @@
+run:
+  tests: true
+  skip-dirs:
+    - vendor
+  linters:
+    disable-all: true
+    enable:
+      - deadcode
+      - errcheck
+      - goconst
+      - gofumpt
+      - goimports
+      - golint
+      - gosimple
+      - govet
+      - ineffassign
+      - nakedret
+      - staticcheck
+      - structcheck
+      - unused
+      - varcheck
+      - whitespace
+    linters-settings:
+      govet:
+        check-shadowing: true
+    issues:
+      exclude-use-default: true

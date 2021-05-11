@@ -14,8 +14,7 @@ type Object interface {
 	GetType() string
 }
 
-type Light interface {
-}
+type Light interface{}
 
 //type Renderable interface {
 //	GetMaterial() Material

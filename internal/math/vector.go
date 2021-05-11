@@ -89,7 +89,7 @@ func (v *Vector2d) Normalize() error {
 	magnitude := v.Norm()
 	if math.Abs(v.X) > magnitude*math.MaxFloat64 ||
 		math.Abs(v.Y) > magnitude*math.MaxFloat64 {
-		return errors.New("Attempting to take the norm of a zero 2d vector")
+		return errors.New("attempting to take the norm of a zero 2d vector")
 	}
 	v.X = v.X / magnitude
 	v.Y = v.Y / magnitude
@@ -191,7 +191,7 @@ func (v Vector3d) Normsqr() float64 {
 func (v *Vector3d) Normalize() error {
 	magnitude := v.Norm()
 	if v.IsZero() {
-		return errors.New("Attempting to take the norm of a zero 3d vector")
+		return errors.New("attempting to take the norm of a zero 3d vector")
 	}
 	v.X = v.X / magnitude
 	v.Y = v.Y / magnitude
@@ -206,7 +206,7 @@ func (v *Vector3d) IsZero() bool {
 		math.Abs(v.Z) == 0.0
 }
 
-//Vector4d is a 4d Vector
+// Vector4d is a 4d Vector
 type Vector4d struct {
 	X, Y, Z, W float64
 }
@@ -297,7 +297,7 @@ func (v *Vector4d) Normalize() error {
 	if math.Abs(v.X) > magnitude*math.MaxFloat64 ||
 		math.Abs(v.Y) > magnitude*math.MaxFloat64 ||
 		math.Abs(v.Z) > magnitude*math.MaxFloat64 {
-		return errors.New("Attempting to take the norm of a zero 4d vector")
+		return errors.New("attempting to take the norm of a zero 4d vector")
 	}
 
 	v.X = v.X / magnitude

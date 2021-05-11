@@ -11,7 +11,7 @@ import (
 )
 
 func TestSphereConfigFromYaml(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description string
 		Expected    interface{}
 		Bytes       []byte
@@ -54,9 +54,9 @@ func TestSphereConfigFromYaml(t *testing.T) {
 }
 
 func TestSphereNew(t *testing.T) {
-	var tests = []struct {
-		Description string
+	tests := []struct {
 		Expected    *Sphere
+		Description string
 		Position    vmath.Vector3d
 		Radius      float64
 	}{
@@ -87,7 +87,7 @@ func TestSphereNew(t *testing.T) {
 }
 
 func TestSphereIntersect(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description string
 		Expected    bool
 		Ray         *vmath.Ray

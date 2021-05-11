@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-//RandNum returns a number between h and l
+// RandNum returns a number between h and l
 func RandNum(h float64, l float64) float64 {
 	return l + rand.Float64()*(h-l)
 }

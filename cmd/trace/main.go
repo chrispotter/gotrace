@@ -8,14 +8,11 @@ import (
 	"github.com/chrispotter/trace/internal/scene"
 )
 
-var sceneFile, outputFile string
-
-func init() {
+func main() {
+	var sceneFile, outputFile string
 	flag.StringVar(&sceneFile, "scene", "scene/test.yml", "This is the scene file to be loaded for rendering")
 	flag.StringVar(&outputFile, "output", "test.png", "This file will be what images will be called in the output folder")
-}
 
-func main() {
 	flag.Parse()
 
 	content, err := ioutil.ReadFile(sceneFile)

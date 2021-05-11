@@ -1,0 +1,29 @@
+cameras:  
+  camera1:
+    position: 
+      - 0.0
+      - 0.0
+      - 15.0
+    ratio: 
+      - 1280.0
+      - 720.0
+colors:
+  lakersPurple:
+    color:
+      - 253
+      - 185
+      - 39
+  lakersYellow:
+    color:
+      - 85
+      - 37
+      - 130
+shapes:
+  sphere1:
+    type: sphere
+    position:
+      - 0.0
+      - 0.0
+      - 0.0
+    radius: 1.0 
+

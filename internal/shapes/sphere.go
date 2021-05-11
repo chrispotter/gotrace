@@ -1,7 +1,6 @@
 package shapes
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/smallfish/simpleyaml"
@@ -127,7 +126,6 @@ func (s *Sphere) Intersect(ray *vmath.Ray) bool {
 	for index, axis := range s.axis {
 		a += s.a[index] * math.Pow(axis.Dot(ray.Direction)/s.s[index], 2)
 		b += s.a[index] * axis.Dot(ray.Direction) * axis.Dot(ray.Origin.Subtract(s.P)) * 2.0 / math.Pow(s.s[index], 2)
-		fmt.Printf("%+v\n", ray.Origin.Subtract(s.P))
 		c += s.a[index]*math.Pow(axis.Dot(ray.Origin.Subtract(s.P))/s.s[index], 2) + s.a[4]
 	}
 

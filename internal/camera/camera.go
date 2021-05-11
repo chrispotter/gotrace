@@ -56,18 +56,26 @@ func (cc *CameraConfig) FromYaml(config *simpleyaml.Yaml) error {
 
 // NewCamera makes new camera with position and image ratio
 func NewCamera(pos vmath.Vector3d, ratio vmath.Vector2d) (*Camera, error) {
+	// image pixels shouldn't be 0 but if they are, just make them 1
+	if ratio.X == 0 {
+		ratio.X = 1
+	}
+	if ratio.Y == 0 {
+		ratio.Y = 1
+	}
+
 	cam := &Camera{
 		P:     pos,
 		U:     vmath.Vector3d{X: 0.0, Y: 1.0, Z: 0.0},
 		XMax:  ratio.X,
 		YMax:  ratio.Y,
-		Depth: 3.0,
+		Depth: 1.0,
 		Sx:    1.0,
 	}
 
 	cam.Sy = (cam.YMax * cam.Sx) / cam.XMax
 
-	err := cam.LookAt(vmath.Vector3d{X: 0.0, Y: 0.0, Z: 1.0}, vmath.Vector3d{X: 0.0, Y: 1.0, Z: 0.0})
+	err := cam.LookAt(cam.P.Add(vmath.Vector3d{X: 0.0, Y: 0.0, Z: -1.0}), vmath.Vector3d{X: 0.0, Y: 1.0, Z: 0.0})
 	if err != nil {
 		return nil, err
 	}
@@ -93,32 +101,22 @@ func CameraFactory(configs []*CameraConfig) ([]*Camera, error) {
 // LookAt point camera at selected vector with specified up
 // vector
 func (c *Camera) LookAt(l vmath.Vector3d, u vmath.Vector3d) error {
-
-	c.N = l
+	c.N = c.P.Subtract(l)
 	err := c.N.Normalize()
 	if err != nil {
 		return err
 	}
 
-	// if up vector and the cameras up vector are equal, then it will result in
-	// 0 vector
-	if !c.N.Equals(u) {
-		c.U = c.N.Cross(u)
-	}
-
-	if !c.U.IsZero() {
-		err = c.U.Normalize()
-		if err != nil {
-			return err
-		}
+	c.U = u.Cross(c.N)
+	err = c.U.Normalize()
+	if err != nil {
+		return err
 	}
 
 	c.V = c.N.Cross(c.U)
-	if !c.V.IsZero() {
-		err = c.V.Normalize()
-		if err != nil {
-			return err
-		}
+	err = c.V.Normalize()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -232,14 +230,16 @@ func (cam *Camera) Rotate(axis vmath.Vector3d, angle float64) {
 
 // getImagePosition in world space
 func (cam *Camera) getImagePosition() vmath.Vector3d {
-	return cam.P.Add(cam.N.SMultiply(cam.Depth))
+	// Image should be along negative N axis, so we'll negate depth
+	return cam.P.Add(cam.N.SMultiply(-cam.Depth))
 }
 
+// upper right hand pixel
 func (cam *Camera) getOriginPixel() vmath.Vector3d {
 	return cam.getImagePosition().Subtract(cam.U.SMultiply(cam.Sx / 2.0)).Add(cam.V.SMultiply(cam.Sy / 2.0))
 }
 
-func (cam *Camera) getPixel(x int, y int) vmath.Vector3d {
+func (cam *Camera) getPixel(x float64, y float64) vmath.Vector3d {
 	return cam.getOriginPixel().Add(cam.U.SMultiply(float64(x) * cam.Sx)).Subtract(cam.V.SMultiply(float64(y) * cam.Sy))
 }
 
@@ -254,9 +254,10 @@ func (cam *Camera) GetImage() *image.RGBA {
 
 // GetPickRay cast a ray from x,y image plane of Camera
 func (cam *Camera) GetPickRay(x int, y int) (*vmath.Ray, error) {
-	pp := cam.getPixel(x, y)
+	pp := cam.getPixel(float64(x)/cam.XMax, float64(y)/cam.YMax)
 
-	err := pp.Normalize()
+	pDirection := pp.Subtract(cam.P)
+	err := pDirection.Normalize()
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +280,7 @@ func (cam *Camera) GetPickRay(x int, y int) (*vmath.Ray, error) {
 
 	return &vmath.Ray{
 		Origin:    cam.P,
-		Direction: pp,
+		Direction: pDirection,
 	}, nil
 }
 
@@ -303,7 +304,6 @@ func (c *Camera) RenderImage(filename string, objs *common.RenderableObjects) er
 	for x := 0; x < image.Rect.Max.X; x++ {
 		for y := 0; y < image.Rect.Max.Y; y++ {
 			ray, err := c.GetPickRay(x, y)
-			fmt.Printf("%+v\n", ray)
 			if err != nil {
 				return err
 			}

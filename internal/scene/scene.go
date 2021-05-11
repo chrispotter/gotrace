@@ -4,6 +4,7 @@ import (
 	"github.com/smallfish/simpleyaml"
 
 	"github.com/chrispotter/trace/internal/camera"
+	"github.com/chrispotter/trace/internal/color"
 	"github.com/chrispotter/trace/internal/common"
 	"github.com/chrispotter/trace/internal/shapes"
 )
@@ -25,6 +26,7 @@ bool aOcclusion = false;
 type Scene struct {
 	Cameras     []*camera.Camera
 	Renderables *common.RenderableObjects
+	Colors      map[string]color.Color
 }
 
 // Render each camera in the scene to the output
@@ -48,6 +50,26 @@ func (s *Scene) FromYaml(data []byte) error {
 		return err
 	}
 
+	// read cameras
+	err = s.cameras(y)
+	if err != nil {
+		return err
+	}
+	// read colors before materials, light so they can reference colors
+	err = s.colors(y)
+	if err != nil {
+		return err
+	}
+	//read materials before shapes so they can reference materials
+	// read shapes
+	err = s.shapes(y)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Scene) cameras(y *simpleyaml.Yaml) error {
 	if y.Get("cameras").IsFound() {
 		yml := y.Get("cameras")
 		var cameraConfigs []*camera.CameraConfig
@@ -70,7 +92,39 @@ func (s *Scene) FromYaml(data []byte) error {
 			return err
 		}
 	}
+	return nil
+}
 
+func (s *Scene) colors(y *simpleyaml.Yaml) error {
+	if y.Get("colors").IsFound() {
+		yml := y.Get("colors")
+		var colorConfigs []*color.ColorConfig
+		keys, err := yml.GetMapKeys()
+		if err != nil {
+			return err
+		}
+		for _, name := range keys {
+			conf := yml.Get(name)
+			colorConfig := &color.ColorConfig{}
+			err := colorConfig.FromYaml(conf)
+			if err != nil {
+				return err
+			}
+			colorConfig.Name = name
+			colorConfigs = append(colorConfigs, colorConfig)
+		}
+
+		colors, err := color.ColorFactory(colorConfigs)
+		if err != nil {
+			return err
+		}
+
+		s.Colors = colors
+	}
+	return nil
+}
+
+func (s *Scene) shapes(y *simpleyaml.Yaml) error {
 	if y.Get("shapes").IsFound() {
 		yml := y.Get("shapes")
 		shapeConfigs, err := shapes.ShapesConfigFactory(yml)
@@ -87,6 +141,5 @@ func (s *Scene) FromYaml(data []byte) error {
 			Shapes: sh,
 		}
 	}
-
 	return nil
 }

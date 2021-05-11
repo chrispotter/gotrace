@@ -16,7 +16,7 @@ type ShapesConfig interface {
 	NewShape() (common.Traceable, error)
 }
 
-//ShapeConfigFactory generates configs for any shape
+// ShapeConfigFactory generates configs for any shape
 func ShapesConfigFactory(yaml *simpleyaml.Yaml) ([]ShapesConfig, error) {
 	configs := []ShapesConfig{}
 	keys, err := yaml.GetMapKeys()
@@ -88,21 +88,21 @@ func (sc *SphereConfig) FromYaml(config *simpleyaml.Yaml) error {
 }
 
 // Vector3d position,lposition;
-//Vector3d axis[3];
-//float s[
-//float a[5];
-//Material *mat;
-//Vector3d ph;
-//int sample;
+// Vector3d axis[3];
+// float s[
+// float a[5];
+// Material *mat;
+// Vector3d ph;
+// int sample;
 // float e;
 type Sphere struct {
-	P        vmath.Vector3d
+	Name     string
 	axis     []vmath.Vector3d
-	radius   float64
-	PlaceHit vmath.Vector3d
 	s        []float64
 	a        []float64
-	Name     string
+	PlaceHit vmath.Vector3d
+	P        vmath.Vector3d
+	radius   float64
 }
 
 func NewSphere(pos vmath.Vector3d, rad float64) *Sphere {
@@ -122,7 +122,7 @@ func NewSphere(pos vmath.Vector3d, rad float64) *Sphere {
 // Intersect satisfies the qualifications for
 // Render object interface for a scene
 func (s *Sphere) Intersect(ray *vmath.Ray) bool {
-	var a, b, c = 0.0, 0.0, 0.0
+	a, b, c := 0.0, 0.0, 0.0
 	for index, axis := range s.axis {
 		a += s.a[index] * math.Pow(axis.Dot(ray.Direction)/s.s[index], 2)
 		b += s.a[index] * axis.Dot(ray.Direction) * axis.Dot(ray.Origin.Subtract(s.P)) * 2.0 / math.Pow(s.s[index], 2)

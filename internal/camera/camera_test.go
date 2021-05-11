@@ -11,7 +11,7 @@ import (
 )
 
 func TestCameraConfigFromYaml(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description string
 		Expected    interface{}
 		Bytes       []byte
@@ -59,9 +59,9 @@ func TestCameraConfigFromYaml(t *testing.T) {
 }
 
 func TestCameraNew(t *testing.T) {
-	var tests = []struct {
-		Description string
+	tests := []struct {
 		Expected    *Camera
+		Description string
 		Position    vmath.Vector3d
 		Ratio       vmath.Vector2d
 	}{
@@ -106,10 +106,10 @@ func TestCameraNew(t *testing.T) {
 }
 
 func TestCameraLookAt(t *testing.T) {
-	var tests = []struct {
-		Description string
+	tests := []struct {
 		Expected    *Camera
 		Camera      *Camera
+		Description string
 		Look        vmath.Vector3d
 		Up          vmath.Vector3d
 	}{
@@ -139,7 +139,7 @@ func TestCameraLookAt(t *testing.T) {
 }
 
 func TestCameraGetImagePosition(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description    string
 		Expected       vmath.Vector3d
 		CameraPosition vmath.Vector3d
@@ -163,7 +163,7 @@ func TestCameraGetImagePosition(t *testing.T) {
 }
 
 func TestCameraGetOriginPixel(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description    string
 		Expected       vmath.Vector3d
 		CameraPosition vmath.Vector3d
@@ -186,7 +186,7 @@ func TestCameraGetOriginPixel(t *testing.T) {
 }
 
 func TestCameraGetPixel(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description    string
 		Expected       vmath.Vector3d
 		CameraPosition vmath.Vector3d
@@ -223,7 +223,7 @@ func TestCameraGetPixel(t *testing.T) {
 }
 
 func TestCameraGetPickRay(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description    string
 		CameraPosition vmath.Vector3d
 		XY             vmath.Vector2d

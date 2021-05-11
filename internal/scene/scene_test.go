@@ -11,7 +11,7 @@ import (
 )
 
 func TestSceneFromYaml(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		Description string
 		Expected    *Scene
 		Bytes       []byte

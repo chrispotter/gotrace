@@ -3,13 +3,11 @@ package camera
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"image/png"
 	"math"
 	"os"
 
-	"github.com/smallfish/simpleyaml"
-
+	"github.com/chrispotter/trace/internal/color"
 	"github.com/chrispotter/trace/internal/common"
 	vmath "github.com/chrispotter/trace/internal/math"
 )
@@ -26,32 +24,8 @@ type Camera struct {
 
 	// depth of field enabled
 	dof bool
-}
 
-// CameraConfig is a yaml definition of the Constructor to be read from
-// util/scene.go
-type CameraConfig struct {
-	Name     string
-	Position vmath.Vector3d `yaml:"position"`
-	Ratio    vmath.Vector2d `yaml:"ratio"`
-}
-
-//FromYaml updates the CameraConfig with it's definition from the input yaml
-func (cc *CameraConfig) FromYaml(config *simpleyaml.Yaml) error {
-	if position, err := config.Get("position").Array(); err == nil {
-		cc.Position = vmath.Vector3d{
-			X: (position[0]).(float64),
-			Y: (position[1]).(float64),
-			Z: (position[2]).(float64),
-		}
-	}
-	if ratio, err := config.Get("ratio").Array(); err == nil {
-		cc.Ratio = vmath.Vector2d{
-			X: (ratio[0]).(float64),
-			Y: (ratio[1]).(float64),
-		}
-	}
-	return nil
+	hit *vmath.Vector2d
 }
 
 // NewCamera makes new camera with position and image ratio
@@ -81,21 +55,6 @@ func NewCamera(pos vmath.Vector3d, ratio vmath.Vector2d) (*Camera, error) {
 	}
 
 	return cam, nil
-}
-
-// CameraFactory returns an array of Cameras from an array of Camera Configs
-func CameraFactory(configs []*CameraConfig) ([]*Camera, error) {
-	cameraMap := []*Camera{}
-	for _, config := range configs {
-		camera, err := NewCamera(config.Position, config.Ratio)
-		if err != nil {
-			return nil, err
-		}
-		camera.Name = config.Name
-		cameraMap = append(cameraMap, camera)
-	}
-
-	return cameraMap, nil
 }
 
 // LookAt point camera at selected vector with specified up
@@ -288,12 +247,33 @@ func (c *Camera) trace(ray *vmath.Ray, objs *common.RenderableObjects) color.Col
 	// determine if ray intersects any shapes in scene
 	// if no hit, return background color
 	// if hit then return material color
-	for _, shape := range objs.Shapes {
+	for index, shape := range objs.Shapes {
 		if shape.Intersect(ray) {
-			return color.RGBA{253, 185, 39, 0xff}
+			if c.hit == nil {
+				c.hit = &vmath.Vector2d{
+					X: float64(index),
+					Y: shape.GetIntersectionRatio(),
+				}
+			} else if shape.GetIntersectionRatio() < c.hit.Y {
+				c.hit = &vmath.Vector2d{
+					X: float64(index),
+					Y: shape.GetIntersectionRatio(),
+				}
+			}
 		}
 	}
-	return color.RGBA{85, 37, 130, 0xff}
+
+	if c.hit == nil {
+		backgroundColor := &color.ColorValue{
+			Color: vmath.Vector3d{0.0, 0.0, 0.0},
+		}
+		return backgroundColor
+	}
+
+	hitShape := objs.Shapes[int(c.hit.X)]
+	materialColor := hitShape.ReturnColor(ray, objs)
+	c.hit = nil
+	return materialColor
 }
 
 // RenderImage will render the objects provided to the file name
@@ -310,7 +290,7 @@ func (c *Camera) RenderImage(filename string, objs *common.RenderableObjects) er
 
 			color := c.trace(ray, objs)
 
-			image.Set(x, y, color)
+			image.Set(x, y, color.GetRGBA())
 		}
 	}
 

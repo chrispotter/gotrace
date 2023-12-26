@@ -1,0 +1,88 @@
+cameras:  
+  camera1:
+    position: 
+      - 0.0
+      - 1.0
+      - -50.0
+    ratio: 
+      - 1280.0
+      - 720.0
+colors:
+  lakersPurple:
+    color:
+      - 253.0
+      - 185.0
+      - 39.0
+  lakersYellow:
+    color:
+      - 85.0
+      - 37.0
+      - 130.0
+materials:
+  lambert1:
+    type: lambert
+    color: 
+      - lakersPurple 
+      - lakersYellow
+  lambert2:
+    type: lambert
+    color: 
+      - lakersPurple 
+      - lakersYellow
+shapes:
+  planeBack:
+    type: plane
+    position:
+      - 0.0
+      - 0.0
+      - 1.0
+    normal:
+      - 0.0
+      - 0.0 
+      - -1.0
+    material: lambert1
+  planeTop:
+    type: plane
+    position:
+      - 3.0
+      - 0.0
+      - 0.0
+    normal:
+      - -1.0
+      - 0.0 
+      - 1.0
+    material: lambert1
+  planeBottom:
+    type: plane
+    position:
+      - 0.0
+      - 3.0
+      - 0.0
+    normal:
+      - 0.0
+      - -1.0 
+      - 0.0
+    material: lambert1
+  planeRight:
+    type: plane
+    position:
+      - 0.0
+      - 0.5
+      - 0.0
+    normal:
+      - 0.0
+      - 1.0 
+      - 0.0
+    material: lambert2
+  planeLeft:
+    type: plane
+    position:
+      - 0.0
+      - 0.0
+      - 3.0
+    normal:
+      - -1.0
+      - 0.0 
+      - -1.0
+    material: lambert2
+

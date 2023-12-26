@@ -1,11 +1,15 @@
 package common
 
 import (
+	"github.com/chrispotter/trace/internal/color"
+	"github.com/chrispotter/trace/internal/lights"
 	vmath "github.com/chrispotter/trace/internal/math"
 )
 
 type Traceable interface {
 	Intersect(cast *vmath.Ray) bool
+	GetIntersectionRatio() float64
+	ReturnColor(*vmath.Ray, *RenderableObjects) color.Color
 }
 
 type Object interface {
@@ -14,20 +18,7 @@ type Object interface {
 	GetType() string
 }
 
-type Light interface{}
-
-//type Renderable interface {
-//	GetMaterial() Material
-//}
-//
-type Material interface {
-	ReturnColor(angle float64,
-		cam float64,
-		ref float64,
-		light Light) vmath.Vector3d
-}
-
 type RenderableObjects struct {
 	Shapes []Traceable
-	Lights []Light
+	Lights []lights.Light
 }

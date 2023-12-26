@@ -1,66 +1,24 @@
 package shapes
 
 import (
+	"errors"
+	"fmt"
 	"math"
 
 	"github.com/smallfish/simpleyaml"
 
+	"github.com/chrispotter/trace/internal/color"
 	"github.com/chrispotter/trace/internal/common"
+	"github.com/chrispotter/trace/internal/material"
 	vmath "github.com/chrispotter/trace/internal/math"
 )
-
-// ShapesConfig is an interface to define all configs able to provide to
-// ShapeFactory
-type ShapesConfig interface {
-	FromYaml(config *simpleyaml.Yaml) error
-	NewShape() (common.Traceable, error)
-}
-
-// ShapeConfigFactory generates configs for any shape
-func ShapesConfigFactory(yaml *simpleyaml.Yaml) ([]ShapesConfig, error) {
-	configs := []ShapesConfig{}
-	keys, err := yaml.GetMapKeys()
-	if err != nil {
-		return nil, err
-	}
-	for _, name := range keys {
-		conf := yaml.Get(name)
-		if t, err := conf.Get("type").String(); err == nil {
-			switch t {
-			case "sphere":
-				sphereConfig := &SphereConfig{}
-				err := sphereConfig.FromYaml(conf)
-				if err != nil {
-					return nil, err
-				}
-				configs = append(configs, sphereConfig)
-			}
-		}
-	}
-
-	return configs, nil
-}
-
-// ShapesFactory will make shapes according to type
-func ShapesFactory(configs []ShapesConfig) ([]common.Traceable, error) {
-	traceables := []common.Traceable{}
-	for _, config := range configs {
-		var traceable common.Traceable
-		traceable, err := config.NewShape()
-		if err != nil {
-			return nil, err
-		}
-		traceables = append(traceables, traceable)
-	}
-
-	return traceables, nil
-}
 
 // SphereConfig defines a sphere for the ShapeFactory
 type SphereConfig struct {
 	Name     string
 	Radius   float64
 	Position vmath.Vector3d
+	Material material.Material
 }
 
 // NewShape generates a Shape from the config object
@@ -68,12 +26,13 @@ type SphereConfig struct {
 func (sc *SphereConfig) NewShape() (common.Traceable, error) {
 	sphere := NewSphere(sc.Position, sc.Radius)
 	sphere.Name = sc.Name
+	sphere.Material = sc.Material
 	return sphere, nil
 }
 
 // FromYaml generates Config from input yaml
 // satisfies the interface ShapesConfig (2/2)
-func (sc *SphereConfig) FromYaml(config *simpleyaml.Yaml) error {
+func (sc *SphereConfig) FromYaml(config *simpleyaml.Yaml, materials map[string]material.Material) error {
 	if position, err := config.Get("position").Array(); err == nil {
 		sc.Position = vmath.Vector3d{
 			X: (position[0]).(float64),
@@ -83,6 +42,15 @@ func (sc *SphereConfig) FromYaml(config *simpleyaml.Yaml) error {
 	}
 	if radius, err := config.Get("radius").Float(); err == nil {
 		sc.Radius = radius
+	}
+	if material, err := config.Get("material").String(); err == nil {
+
+		m, ok := materials[material]
+		if ok {
+			sc.Material = m
+		} else {
+			return errors.New(fmt.Sprintf("material %s does not exist in scene.", material))
+		}
 	}
 	return nil
 }
@@ -96,13 +64,17 @@ func (sc *SphereConfig) FromYaml(config *simpleyaml.Yaml) error {
 // int sample;
 // float e;
 type Sphere struct {
-	Name     string
-	axis     []vmath.Vector3d
-	s        []float64
-	a        []float64
-	PlaceHit vmath.Vector3d
-	P        vmath.Vector3d
-	radius   float64
+	Name              string
+	axis              []vmath.Vector3d
+	s                 []float64
+	a                 []float64
+	PlaceHit          vmath.Vector3d
+	P                 vmath.Vector3d
+	intersectionRatio float64
+	radius            float64
+	delta             float64
+
+	Material material.Material
 }
 
 func NewSphere(pos vmath.Vector3d, rad float64) *Sphere {
@@ -131,7 +103,19 @@ func (s *Sphere) Intersect(ray *vmath.Ray) bool {
 
 	d := math.Pow(b, 2) - 4.0*a*c
 
-	return (-b - math.Sqrt(d)/(2.0*a)) > 0
+	quadPlus := (-b + math.Sqrt(d)/(2.0*a))
+	quadMinus := (-b - math.Sqrt(d)/(2.0*a))
+
+	s.intersectionRatio = quadMinus
+	if quadPlus < quadMinus || quadMinus < 0 {
+		s.intersectionRatio = quadPlus
+	}
+	if s.intersectionRatio > 0 && d > 0 {
+		s.PlaceHit = ray.Origin.Add(ray.Direction.SMultiply(s.intersectionRatio))
+		s.delta = d
+		return true
+	}
+	return false
 }
 
 // GetPosition satisfies requirements for Object
@@ -148,4 +132,41 @@ func (s *Sphere) GetName() string {
 // interface for a scene
 func (s *Sphere) GetType() string {
 	return "sphere"
+}
+
+// GetIntersectionRatio
+func (s *Sphere) GetIntersectionRatio() float64 {
+	return s.intersectionRatio
+}
+
+func (s *Sphere) CalculateNorm(hit vmath.Vector3d) vmath.Vector3d {
+	grad := vmath.Vector3d{0.0, 0.0, 0.0}
+	for index, axis := range s.axis {
+		//(2.0*a[i]*(axis[i] * (hit - getPosition()))/pow(s[i],2))*axis[i]
+		grad = grad.Add(axis.SMultiply(2.0 * s.a[index] * axis.Dot(hit.Subtract(s.P)) / math.Pow(s.s[index], 2)))
+	}
+	grad.Normalize()
+
+	return grad
+}
+
+func (s *Sphere) ReturnColor(ray *vmath.Ray, objs *common.RenderableObjects) color.Color {
+	color := &color.ColorValue{
+		Color: vmath.Vector3d{
+			X: 0.0,
+			Y: 0.0,
+			Z: 0.0,
+		},
+	}
+	nh := s.CalculateNorm(s.PlaceHit)     //normalized surface normal
+	nc := ray.Origin.Subtract(s.PlaceHit) //normalized camera and ph vector
+	nc.Normalize()
+	cameraAngle := nh.Dot(nc) //angle between camera and surface normal
+	for _, light := range objs.Lights {
+		nlh := light.ReturnLightVector(s.PlaceHit) // normalized light direction
+		lightAngle := nh.Dot(nlh)
+		color.Add(s.Material.ReturnColor(lightAngle, cameraAngle, 0, light))
+	}
+
+	return color
 }

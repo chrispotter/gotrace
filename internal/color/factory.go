@@ -14,7 +14,7 @@ type ColorConfig struct {
 	ImagePath string         `yaml:"path"`
 }
 
-//FromYaml updates the CameraConfig with it's definition from the input yaml
+//FromYaml updates the ColorConfig with it's definition from the input yaml
 func (cc *ColorConfig) FromYaml(config *simpleyaml.Yaml) error {
 	if color, err := config.Get("color").Array(); err == nil {
 		cc.Color = vmath.Vector3d{

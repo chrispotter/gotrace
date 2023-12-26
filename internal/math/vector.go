@@ -139,7 +139,7 @@ func (v Vector3d) Dot(vec Vector3d) float64 {
 	return v.X*vec.X + v.Y*vec.Y + v.Z*vec.Z
 }
 
-// Compt component-wise multiplication of Vector3d
+// Compt component-wise multiplication of Vector3d (^)
 func (v Vector3d) Compt(vec Vector3d) Vector3d {
 	return Vector3d{
 		X: v.X * vec.X,

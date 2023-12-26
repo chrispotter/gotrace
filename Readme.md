@@ -119,4 +119,4 @@ Feel free to experiment with different camera settings, lights, and objects to c
 The factory pattern is used to create objects dynamically based on their types. Each scene object (e.g., sphere, plane) is created using a factory method, allowing for easy extension with new object types.
 
 Acknowledgments
-The go-yaml package is used for parsing YAML files.
+The `smallfish/simpleyaml` package is used for parsing YAML files.
